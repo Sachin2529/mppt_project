@@ -1,0 +1,113 @@
+
+max_iterations = 5;
+pollen_population = 3;
+duty_cycle_min = 0.2;
+duty_cycle_max = 0.8;
+conversion_probability = 0.8;
+termination_threshold = 0.005;
+
+
+P_voc = 30; % Open-circuit voltage (V)
+I_sc = 10;  % Short-circuit current (A)
+V_oc = linspace(0, P_voc, 100); % Voltage vector for plotting
+
+
+duty_cycles = duty_cycle_min + (duty_cycle_max - duty_cycle_min) * rand(pollen_population, 1);
+fitness_values = zeros(pollen_population, 1);
+global_optimal_duty_cycle = duty_cycles(1);
+global_optimal_power = -inf;
+
+
+objective_function = @(duty_cycle) duty_cycle .* (P_voc - duty_cycle);
+
+
+duty_cycle_history = zeros(max_iterations, pollen_population);
+power_history = zeros(max_iterations, pollen_population);
+
+
+for iter = 1:max_iterations
+    
+    fitness_values = arrayfun(@(d) objective_function(d), duty_cycles);
+    
+    
+    [current_best_fitness, best_idx] = max(fitness_values);
+    current_best_duty_cycle = duty_cycles(best_idx);
+    
+    
+    if current_best_fitness > global_optimal_power
+        global_optimal_power = current_best_fitness;
+        global_optimal_duty_cycle = current_best_duty_cycle;
+    end
+    
+    
+    duty_cycle_history(iter, :) = duty_cycles';
+    power_history(iter, :) = fitness_values';
+    
+    
+    for i = 1:pollen_population
+        if rand < conversion_probability
+            
+            new_duty_cycle = global_optimal_duty_cycle + (rand - 0.5) * (duty_cycle_max - duty_cycle_min);
+        else
+            
+            new_duty_cycle = duty_cycles(i) + (rand - 0.5) * (duty_cycle_max - duty_cycle_min);
+        end
+        
+        
+        new_duty_cycle = max(min(new_duty_cycle, duty_cycle_max), duty_cycle_min);
+        
+        
+        new_fitness = objective_function(new_duty_cycle);
+        
+        
+        if new_fitness > fitness_values(i)
+            duty_cycles(i) = new_duty_cycle;
+            fitness_values(i) = new_fitness;
+        end
+    end
+    
+    
+    if abs(global_optimal_duty_cycle - duty_cycles(best_idx)) < termination_threshold
+        break;
+    end
+end
+
+
+fprintf('Optimal Duty Cycle: %.4f\n', global_optimal_duty_cycle);
+fprintf('Optimal Power: %.4f\n', global_optimal_power);
+
+
+figure;
+
+subplot(2, 2, 1);
+plot(duty_cycle_history(:), arrayfun(@(d) objective_function(d), duty_cycle_history(:)), 'o-');
+title('PV Voltage vs. Duty Cycle');
+xlabel('Duty Cycle');
+ylabel('Power Output');
+grid on;
+
+subplot(2, 2, 2);
+plot(duty_cycle_history(:), P_voc - duty_cycle_history(:), 'o-');
+title('PV Current vs. Duty Cycle');
+xlabel('Duty Cycle');
+ylabel('PV Current');
+grid on;
+
+subplot(2, 2, 3);
+plot(duty_cycle_history(:), power_history(:), 'o-');
+title('Output Power vs. Duty Cycle');
+xlabel('Duty Cycle');
+ylabel('Output Power');
+grid on;
+
+subplot(2, 2, 4);
+hold on;
+for i = 1:pollen_population
+    plot(1:iter, duty_cycle_history(1:iter, i), 'DisplayName', sprintf('Pollen %d', i));
+end
+title('Duty Cycle over Iterations');
+xlabel('Iteration');
+ylabel('Duty Cycle');
+grid on;
+legend show;
+hold off;
