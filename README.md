@@ -21,7 +21,7 @@ line 101-106 Output Power vs. Duty Cycle.
 line 109-116 Duty Cycle over Iterations.
 line 118,119 Ends plotting.
 ///////////////_TERMINAL RUNNING CONDITION_//////////////
-Matlab is a Mathmatical simulation software, It is also developed to run in python compiler
+Matlab is a Mathmatical simulation software, it is also developed to run in python compiler
 with proper extensions.For the developed python code choose cmd in terminal, create environment to 
 install Library extensions locally to this file. Once the installation is complete choose file 
 location and run the Program.
